@@ -205,9 +205,12 @@ z-index: 5;
         
     </style>
     <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
-    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    <script 
+        type="text/javascript" 
+        src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <!--[if lte IE 8]>
-        <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v2/themes/css/cartodb.ie.css" />
+        <link rel="stylesheet" 
+            href="http://libs.cartocdn.com/cartodb.js/v2/themes/css/cartodb.ie.css" />
     <![endif]-->
 
   </head>
@@ -224,42 +227,90 @@ z-index: 5;
      var map, 
 	vis,
 	layer, 
-	sql = "select cartodb_id,  the_geom_webmercator , sum(type) as type FROM ( " +
-	      "select g.cartodb_id, g.the_geom_webmercator, 1 as type from get_tile_beta('gbif_aug_2013', '{0}') t, table_360x114global g " +
-	" WHERE " +
- 	"ST_Dwithin( " +
-      "g.the_geom_webmercator, "+
-      "t.the_geom_webmercator,0) " +
-      "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
-      "UNION ALL " +
-      "select g.cartodb_id, g.the_geom_webmercator, 2 as type from get_tile('iucn', 'range', '{0}', null) t, table_360x114global g " +
-      " WHERE " +  		
-      " ST_Dwithin( " +
-      " g.the_geom_webmercator, "+
-      " t.the_geom_webmercator,0) " +
-      " GROUP BY g.cartodb_id, g.the_geom_webmercator " +
-  " ) s group by cartodb_id, the_geom_webmercator ",
-      report_sql = "select count(case when type = 1 then 1 else null end) as pt_only_ct, " +
-	"round(sum(case when type = 1 then ST_Area(the_geom_webmercator) else 0 end)/10000)/100 as pt_only_area, " +
-	"count(case when type = 2 then 1 else null end) as range_only_ct, " +
-	"round(sum(case when type = 2 then ST_Area(the_geom_webmercator) else 0 end)/10000)/100 as range_only_area, " +
-	"count(case when type = 3 then 1 else null end) as both_ct, " +
-	"round(sum(case when type = 3 then ST_Area(the_geom_webmercator) else 0 end)/10000)/100 as both_area " +
-	"FROM (select cartodb_id,  the_geom_webmercator , sum(type) as type FROM ( " +
-              "select g.cartodb_id, g.the_geom_webmercator, 1 as type from get_tile_beta('gbif_aug_2013', '{0}') t, table_360x114global g " +
-        " WHERE " +
-        "ST_Dwithin( " +
-      "g.the_geom_webmercator, "+
-      "t.the_geom_webmercator,0) " +
-      "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
-      "UNION ALL " +
-      "select g.cartodb_id, g.the_geom_webmercator, 2 as type from get_tile('iucn', 'range', '{0}', null) t, table_360x114global g " +
-      " WHERE " +               
-      " ST_Dwithin( " +
-      " g.the_geom_webmercator, "+
-      " t.the_geom_webmercator,0) " +
-      " GROUP BY g.cartodb_id, g.the_geom_webmercator " +
-  " ) s group by cartodb_id, the_geom_webmercator) r ";
+	sql = "" +
+	    "SELECT " +
+	        "cartodb_id, the_geom_webmercator, sum(type) as type " +
+            "FROM ( " +
+	        "SELECT g.cartodb_id, g.the_geom_webmercator, 1 as type "+
+                "FROM "+
+                    "get_tile_beta('gbif_aug_2013','{0}') t, " + 
+                    "table_360x114global g " +
+	        "WHERE " +
+ 	            "ST_Dwithin( " +
+                        "g.the_geom_webmercator, "+
+                        "t.the_geom_webmercator,0) " +
+                "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
+                "UNION ALL " +
+                "SELECT " +
+                    "g.cartodb_id, g.the_geom_webmercator, 2 as type " +
+                "FROM " +
+                    "get_tile('iucn','range','{0}',null) t, "+
+                    "table_360x114global g " +
+                "WHERE " +  		
+                    "ST_Dwithin( " +
+                        "g.the_geom_webmercator, "+
+                        "t.the_geom_webmercator,0) " +
+                "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
+            ") s " +
+            "GROUP BY cartodb_id, the_geom_webmercator",
+      report_sql = "" +
+          "SELECT " + 
+              "count(case when type = 1 then 1 else null end) as pt_only_ct, " +
+	      "round(sum(" +
+                  "CASE WHEN type = 1 THEN " +
+                      "ST_Area(the_geom_webmercator) " +
+                  "ELSE "+
+                      "0 " +
+                  "END" +
+              ")/10000)/100 AS pt_only_area, " +
+	      "count(CASE WHEN type = 2 THEN 1 ELSE null END) " +
+	          "AS range_only_ct, " +
+	      "round(sum(" +
+                  "CASE WHEN type = 2 THEN " +
+                      "ST_Area(the_geom_webmercator) " +
+                  "ELSE " +
+                      "0 " +
+                  "END)/10000)/100 as range_only_area, " +
+	      "count(CASE WHEN type = 3 THEN 1 ELSE null END) as both_ct, " +
+	      "round(sum("+
+                  "CASE WHEN type = 3 THEN " +
+                      "ST_Area(the_geom_webmercator) " +
+                  "ELSE " +
+                      "0 " +
+                  "END)/10000)/100 as both_area " +
+	  "FROM (" +
+              "SELECT " +
+                  "cartodb_id, " +
+                  "the_geom_webmercator, " + 
+                  "sum(type) as type " +
+              "FROM ( " +
+                  "SELECT " +
+                      "g.cartodb_id, " +
+                      "g.the_geom_webmercator, " +
+                      "1 as type " +
+                  "FROM " +
+                      "get_tile_beta('gbif_aug_2013', '{0}') t, " +
+                      "table_360x114global g " +
+                  "WHERE " +
+                      "ST_Dwithin( " +
+                          "g.the_geom_webmercator, "+
+                          "t.the_geom_webmercator,0) " +
+                  "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
+                  "UNION ALL " +
+                  "SELECT " +
+                      "g.cartodb_id, " +
+                      "g.the_geom_webmercator, " +
+                      "2 as type " + 
+                  "FROM " +
+                      "get_tile('iucn', 'range', '{0}', null) t, " +
+                      "table_360x114global g " +
+                  "WHERE " +               
+                      "ST_Dwithin( " +
+                          "g.the_geom_webmercator, "+
+                          "t.the_geom_webmercator,0) " +
+                  "GROUP BY g.cartodb_id, g.the_geom_webmercator " +
+              ") s " +
+          "group by cartodb_id, the_geom_webmercator) r ";
         
         
       String.prototype.format = function(i, safe, arg) {
@@ -301,7 +352,7 @@ z-index: 5;
       
       function getReport (n) {
 	$.getJSON(
-		'http://d3dvrpov25vfw0.cloudfront.net/api/v1/sql?q={0}&callback=&'
+		'http://d3dvrpov25vfw0.cloudfront.net/api/v1/sql?cache=10222013&q={0}&callback=&'
 			.format(report_sql.format(n)),
 		function(result) {
 			var html = '<div class="report">' +
